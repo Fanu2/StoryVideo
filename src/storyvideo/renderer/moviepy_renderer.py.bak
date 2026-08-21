@@ -1,0 +1,341 @@
+from pathlib import Path
+
+
+from moviepy import (
+    ImageClip,
+    VideoFileClip,
+    AudioFileClip,
+    concatenate_videoclips,
+    concatenate_audioclips,
+)
+
+
+from moviepy.audio.fx.AudioFadeIn import AudioFadeIn
+from moviepy.audio.fx.AudioFadeOut import AudioFadeOut
+
+
+
+from storyvideo.core.scene import (
+    get_scenes,
+)
+
+from storyvideo.core.media import (
+    get_media,
+)
+
+
+from storyvideo.audio.tracks import (
+    get_audio_tracks,
+)
+
+
+
+# -------------------------------------------------
+# Prepare audio track
+# -------------------------------------------------
+
+def prepare_audio(
+    audio_file,
+    duration,
+    volume=1.0
+):
+
+    """
+    Prepare project audio.
+
+    Features:
+    - Loop short audio
+    - Trim long audio
+    - Match video duration
+    - Adjust volume
+    - Fade in/out
+    """
+
+
+    audio = AudioFileClip(
+        audio_file
+    )
+
+
+    clips = []
+
+    total_duration = 0
+
+
+
+    while total_duration < duration:
+
+        clips.append(
+            audio
+        )
+
+        total_duration += audio.duration
+
+
+
+    if len(clips) > 1:
+
+        audio = concatenate_audioclips(
+            clips
+        )
+
+
+
+    audio = audio.subclipped(
+        0,
+        duration
+    )
+
+
+
+    audio = audio.with_volume_scaled(
+        volume
+    )
+
+
+
+    audio = audio.with_effects(
+        [
+            AudioFadeIn(2),
+            AudioFadeOut(3),
+        ]
+    )
+
+
+    return audio
+
+
+
+# -------------------------------------------------
+# Build video timeline
+# -------------------------------------------------
+
+def build_video(project_id):
+
+    """
+    Build video from scenes.
+
+    Audio is handled separately.
+    """
+
+
+    video_clips = []
+
+
+
+    scenes = get_scenes(
+        project_id
+    )
+
+
+
+    for scene in scenes:
+
+
+        scene_clips = []
+
+
+
+        media = get_media(
+            scene[0]
+        )
+
+
+
+        for item in media:
+
+
+            path = item[1]
+
+            kind = item[2]
+
+
+
+            if kind == "image":
+
+
+                clip = (
+                    ImageClip(path)
+                    .with_duration(
+                        scene[2]
+                    )
+                )
+
+
+                scene_clips.append(
+                    clip
+                )
+
+
+
+            elif kind == "video":
+
+
+                clip = VideoFileClip(
+                    path
+                )
+
+
+                scene_clips.append(
+                    clip
+                )
+
+
+
+        if scene_clips:
+
+
+            video_clips.append(
+                concatenate_videoclips(
+                    scene_clips
+                )
+            )
+
+
+
+    if not video_clips:
+
+        return None
+
+
+
+    return concatenate_videoclips(
+        video_clips
+    )
+
+
+
+# -------------------------------------------------
+# Add project audio
+# -------------------------------------------------
+
+def add_project_audio(
+    video,
+    project_id
+):
+
+    """
+    Attach project audio tracks.
+    """
+
+
+    tracks = get_audio_tracks(
+        project_id
+    )
+
+
+
+    if not tracks:
+
+        return video
+
+
+
+    audio_tracks = []
+
+
+
+    for track in tracks:
+
+
+        audio = prepare_audio(
+            track[1],
+            video.duration,
+            track[3]
+        )
+
+
+        audio_tracks.append(
+            audio
+        )
+
+
+
+    if audio_tracks:
+
+
+        final_audio = concatenate_audioclips(
+            audio_tracks
+        )
+
+
+        video = video.with_audio(
+            final_audio
+        )
+
+
+
+    return video
+
+
+
+# -------------------------------------------------
+# Export MP4
+# -------------------------------------------------
+
+def render_project(
+    project_id,
+    output_file="projects/exports/video.mp4"
+):
+
+    """
+    Render final MP4 file.
+    """
+
+
+    video = build_video(
+        project_id
+    )
+
+
+
+    if video is None:
+
+        print(
+            "No video content found"
+        )
+
+        return
+
+
+
+    video = add_project_audio(
+        video,
+        project_id
+    )
+
+
+
+    output = Path(
+        output_file
+    )
+
+
+
+    output.parent.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+
+
+    print(
+        "Rendering:",
+        output
+    )
+
+
+
+    video.write_videofile(
+        str(output),
+        fps=24,
+        codec="libx264",
+        audio_codec="aac"
+    )
+
+
+
+    print(
+        "Finished:",
+        output
+    )
