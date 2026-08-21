@@ -1,20 +1,19 @@
 from pathlib import Path
 
-
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
+    QLineEdit,
+    QComboBox,
 )
-
 
 from PySide6.QtCore import (
     Signal,
     QSize,
 )
-
 
 from PySide6.QtGui import (
     QIcon,
@@ -22,16 +21,16 @@ from PySide6.QtGui import (
 )
 
 
-
 class AssetsWidget(QWidget):
 
     """
     Project asset browser.
 
-    Displays:
-    - Images
-    - Videos
-    - Audio files
+    Features:
+    - Thumbnail grid
+    - Search
+    - Type filter
+    - Asset selection signal
 
     Receives data from Asset Service only.
     """
@@ -54,10 +53,36 @@ class AssetsWidget(QWidget):
         )
 
 
+        self.search = QLineEdit()
+
+        self.search.setPlaceholderText(
+            "Search assets..."
+        )
+
+
+        self.filter = QComboBox()
+
+        self.filter.addItems(
+            [
+                "All",
+                "Images",
+                "Videos",
+                "Audio",
+            ]
+        )
+
+
+        self.search.textChanged.connect(
+            self.apply_filter
+        )
+
+        self.filter.currentTextChanged.connect(
+            self.apply_filter
+        )
+
+
         self.list = QListWidget()
 
-
-        # Better thumbnail view
 
         self.list.setIconSize(
             QSize(
@@ -66,8 +91,6 @@ class AssetsWidget(QWidget):
             )
         )
 
-
-        # Thumbnail grid mode
 
         self.list.setViewMode(
             QListWidget.IconMode
@@ -106,6 +129,13 @@ class AssetsWidget(QWidget):
             self.title
         )
 
+        layout.addWidget(
+            self.search
+        )
+
+        layout.addWidget(
+            self.filter
+        )
 
         layout.addWidget(
             self.list
@@ -127,75 +157,114 @@ class AssetsWidget(QWidget):
     ):
 
         """
-        Load assets from Asset Service.
+        Receive assets from Asset Service.
         """
 
+        self.assets = assets
+
+        self.apply_filter()
+
+
+
+    def apply_filter(self):
+
+        """
+        Filter assets without touching service layer.
+        """
 
         self.list.clear()
 
 
-        self.assets = assets
+        text = self.search.text().lower()
+
+        selected = self.filter.currentText()
 
 
-
-        for asset in assets:
-
-
-            item = QListWidgetItem()
-
-
-            path = asset["path"]
+        for asset in self.assets:
 
 
             filename = Path(
-                path
-            ).name
+                asset["path"]
+            ).name.lower()
 
 
+            if text and text not in filename:
 
-            item.setText(
-                f"{asset['type'].upper()} : {filename}"
-            )
-
+                continue
 
 
-            # Image thumbnail
+            if selected == "Images" and asset["type"] != "image":
 
-            if (
-                asset["type"] == "image"
-                and Path(path).exists()
-            ):
-
-                pixmap = QPixmap(
-                    path
-                )
+                continue
 
 
-                if not pixmap.isNull():
+            if selected == "Videos" and asset["type"] != "video":
 
-                    thumbnail = pixmap.scaled(
-                        96,
-                        96
-                    )
+                continue
 
 
-                    item.setIcon(
-                        QIcon(
-                            thumbnail
-                        )
-                    )
+            if selected == "Audio" and asset["type"] != "audio":
+
+                continue
 
 
-
-            item.setData(
-                1000,
+            self.add_asset_item(
                 asset
             )
 
 
-            self.list.addItem(
-                item
+
+    def add_asset_item(
+        self,
+        asset
+    ):
+
+        item = QListWidgetItem()
+
+
+        path = asset["path"]
+
+        filename = Path(
+            path
+        ).name
+
+
+        item.setText(
+            f"{asset['type'].upper()} : {filename}"
+        )
+
+
+        if (
+            asset["type"] == "image"
+            and Path(path).exists()
+        ):
+
+            pixmap = QPixmap(
+                path
             )
+
+
+            if not pixmap.isNull():
+
+                item.setIcon(
+                    QIcon(
+                        pixmap.scaled(
+                            96,
+                            96
+                        )
+                    )
+                )
+
+
+        item.setData(
+            1000,
+            asset
+        )
+
+
+        self.list.addItem(
+            item
+        )
 
 
 
@@ -203,11 +272,6 @@ class AssetsWidget(QWidget):
         self,
         item
     ):
-
-        """
-        Emit selected asset.
-        """
-
 
         asset = item.data(
             1000
