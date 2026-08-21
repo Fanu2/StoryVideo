@@ -67,8 +67,33 @@ class AssetsWidget(QWidget):
         )
 
 
+        # Thumbnail grid mode
+
+        self.list.setViewMode(
+            QListWidget.IconMode
+        )
+
+
+        self.list.setResizeMode(
+            QListWidget.Adjust
+        )
+
+
+        self.list.setMovement(
+            QListWidget.Static
+        )
+
+
         self.list.setSpacing(
-            4
+            12
+        )
+
+
+        self.list.setGridSize(
+            QSize(
+                140,
+                140
+            )
         )
 
 
