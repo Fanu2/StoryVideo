@@ -1,9 +1,15 @@
 from .database import get_connection
 
 
-def add_media(scene_id, file_path, media_type):
+
+def add_media(
+    scene_id,
+    file_path,
+    media_type
+):
 
     conn = get_connection()
+
 
     conn.execute(
         """
@@ -18,13 +24,19 @@ def add_media(scene_id, file_path, media_type):
         )
     )
 
+
     conn.commit()
+
     conn.close()
 
 
-def get_media(scene_id):
+
+def get_media(
+    scene_id
+):
 
     conn = get_connection()
+
 
     rows = conn.execute(
         """
@@ -32,15 +44,22 @@ def get_media(scene_id):
         FROM media
         WHERE scene_id=?
         """,
-        (scene_id,)
+        (
+            scene_id,
+        )
     ).fetchall()
 
+
     conn.close()
+
 
     return rows
 
 
-def get_project_media(project_id):
+
+def get_project_media(
+    project_id
+):
 
     """
     Get all media belonging to a project.
@@ -50,6 +69,7 @@ def get_project_media(project_id):
     file_path,
     media_type
     """
+
 
     conn = get_connection()
 
@@ -80,6 +100,7 @@ def get_project_media(project_id):
 
 
     return rows
+
 
 
 def media_exists(
@@ -114,3 +135,36 @@ def media_exists(
 
 
     return row is not None
+
+
+
+def remove_media(
+    media_id
+):
+
+    """
+    Remove media assignment from a scene.
+
+    Removes only database relation.
+    Does not delete the actual file.
+    """
+
+
+    conn = get_connection()
+
+
+    conn.execute(
+        """
+        DELETE FROM media
+        WHERE id=?
+        """,
+        (
+            media_id,
+        )
+    )
+
+
+    conn.commit()
+
+
+    conn.close()

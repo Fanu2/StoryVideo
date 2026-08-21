@@ -6,6 +6,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
 )
 
+from PySide6.QtCore import Signal
+
 from PySide6.QtGui import QPixmap
 
 
@@ -19,12 +21,20 @@ class PreviewWidget(QWidget):
     - Display images attached to selected scene
     - Navigate between scene images
     - Show media information
+    - Request image removal
 
     Does not:
     - access database
     - manage scenes
+    - delete files
     - render video
     """
+
+
+    # Sends selected media database id
+    # to MainWindow for removal
+
+    media_remove_requested = Signal(int)
 
 
 
@@ -36,6 +46,14 @@ class PreviewWidget(QWidget):
         # Current scene images
 
         self.images = []
+
+
+        # Database ids matching images
+
+        self.media_ids = []
+
+
+        # Current image position
 
         self.current_index = 0
 
@@ -50,6 +68,7 @@ class PreviewWidget(QWidget):
         self.info = QLabel(
             "No scene selected"
         )
+
 
 
         # Current image position
@@ -83,6 +102,7 @@ class PreviewWidget(QWidget):
         buttons = QHBoxLayout()
 
 
+
         self.previous = QPushButton(
             "Previous"
         )
@@ -91,6 +111,12 @@ class PreviewWidget(QWidget):
         self.next = QPushButton(
             "Next"
         )
+
+
+        self.remove = QPushButton(
+            "Remove Image"
+        )
+
 
 
         self.previous.clicked.connect(
@@ -103,6 +129,12 @@ class PreviewWidget(QWidget):
         )
 
 
+        self.remove.clicked.connect(
+            self.remove_current_image
+        )
+
+
+
         buttons.addWidget(
             self.previous
         )
@@ -110,6 +142,11 @@ class PreviewWidget(QWidget):
 
         buttons.addWidget(
             self.next
+        )
+
+
+        buttons.addWidget(
+            self.remove
         )
 
 
@@ -142,16 +179,21 @@ class PreviewWidget(QWidget):
 
     def set_images(
         self,
-        images
+        images,
+        media_ids
     ):
 
         """
-        Receive image paths
-        from selected scene.
+        Receive scene image paths
+        and matching database ids.
         """
 
 
         self.images = images
+
+
+        self.media_ids = media_ids
+
 
         self.current_index = 0
 
@@ -175,9 +217,11 @@ class PreviewWidget(QWidget):
                 "No image"
             )
 
+
             self.counter.setText(
                 ""
             )
+
 
             return
 
@@ -232,6 +276,7 @@ class PreviewWidget(QWidget):
             ) - 1
 
 
+
         self.update_preview()
 
 
@@ -261,7 +306,36 @@ class PreviewWidget(QWidget):
             self.current_index = 0
 
 
+
         self.update_preview()
+
+
+
+    def remove_current_image(
+        self
+    ):
+
+        """
+        Request removal of current image.
+
+        MainWindow handles database removal.
+        """
+
+
+        if not self.media_ids:
+
+            return
+
+
+
+        media_id = self.media_ids[
+            self.current_index
+        ]
+
+
+        self.media_remove_requested.emit(
+            media_id
+        )
 
 
 

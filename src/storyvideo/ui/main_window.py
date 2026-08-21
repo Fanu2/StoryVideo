@@ -155,6 +155,10 @@ class MainWindow(QMainWindow):
 
         self.preview = PreviewWidget()
 
+        self.preview.media_remove_requested.connect(
+            self.remove_scene_media
+        )
+
 
         # Project Audio
 
@@ -723,6 +727,10 @@ class MainWindow(QMainWindow):
 
         Loads all images attached to
         the selected scene into preview.
+
+        Preview receives:
+        - image paths
+        - database media ids
         """
 
 
@@ -738,13 +746,25 @@ class MainWindow(QMainWindow):
         )
 
 
-        # Extract only image files
+
+        # Extract image paths
 
         images = [
             media[1]
             for media in media_items
             if media[2] == "image"
         ]
+
+
+
+        # Extract matching database ids
+
+        media_ids = [
+            media[0]
+            for media in media_items
+            if media[2] == "image"
+        ]
+
 
 
         # Update preview information
@@ -754,13 +774,39 @@ class MainWindow(QMainWindow):
         )
 
 
-        # Load scene images
+
+        # Load images and ids
 
         self.preview.set_images(
-            images
+            images,
+            media_ids
         )
 
 
+    def remove_scene_media(
+        self,
+        media_id
+    ):
+
+        """
+        Remove media assignment.
+
+        Does not delete file.
+        Only removes scene link.
+        """
+
+
+        from storyvideo.core.media import (
+            remove_media,
+        )
+
+
+        remove_media(
+            media_id
+        )
+
+
+        self.refresh()
 
     def edit_duration(self):
 
