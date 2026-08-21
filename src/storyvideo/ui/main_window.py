@@ -143,37 +143,60 @@ class MainWindow(QMainWindow):
         self.assets = AssetsWidget()
 
 
+        # Main editor splitter
+
         splitter = QSplitter(
             Qt.Vertical
         )
 
 
+        # Timeline
+
         splitter.addWidget(
             self.timeline
         )
 
-        splitter.addWidget(
+
+        # Preview + Assets workspace
+
+        workspace = QSplitter(
+            Qt.Horizontal
+        )
+
+
+        workspace.addWidget(
             self.preview
         )
 
-        splitter.addWidget(
+
+        workspace.addWidget(
             self.assets
         )
 
+
+        workspace.setSizes(
+            [
+                750,
+                300
+            ]
+        )
+
+
+        splitter.addWidget(
+            workspace
+        )
+
+
+        # Audio tracks
 
         splitter.addWidget(
             self.audio_tracks
         )
 
 
-        splitter.addWidget(
-            self.assets
-        )
-
-
         splitter.setSizes(
             [
-                220,
+                200,
                 450,
                 180
             ]
