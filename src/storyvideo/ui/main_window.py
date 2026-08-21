@@ -53,6 +53,11 @@ from storyvideo.renderer.moviepy_renderer import (
 )
 
 
+from storyvideo.media.drop_service import (
+    MediaDropService,
+)
+
+
 # Widgets
 from storyvideo.ui.widgets.timeline import (
     TimelineWidget,
@@ -116,6 +121,9 @@ class MainWindow(QMainWindow):
         self.current_project = None
         self.current_scene = None
 
+
+        self.drop_service = MediaDropService()
+
         self.project_modified = False
         self.project_name = None
 
@@ -135,6 +143,11 @@ class MainWindow(QMainWindow):
 
         self.timeline.edit_button.clicked.connect(
             self.edit_duration
+        )
+
+
+        self.timeline.asset_dropped.connect(
+            self.handle_asset_drop
         )
 
 
@@ -424,6 +437,7 @@ class MainWindow(QMainWindow):
 
             self.current_scene = None
 
+
             self.project_modified = False
 
 
@@ -460,6 +474,8 @@ class MainWindow(QMainWindow):
 
         self.current_project = None
         self.current_scene = None
+
+
 
 
         # Clear timeline
@@ -761,6 +777,64 @@ class MainWindow(QMainWindow):
             self.preview.show_image(
                 asset["path"]
             )
+
+
+    def handle_asset_drop(
+        self,
+        scene_id,
+        path
+    ):
+
+        asset = {
+            "path": path,
+            "type": Path(path).suffix.lower().replace(".", "")
+        }
+
+
+        if asset["type"] in [
+            "jpg",
+            "jpeg",
+            "png",
+            "webp"
+        ]:
+
+            asset["type"] = "image"
+
+
+        elif asset["type"] in [
+            "mp4",
+            "mkv",
+            "mov"
+        ]:
+
+            asset["type"] = "video"
+
+
+        else:
+
+            asset["type"] = "audio"
+
+
+
+        # Save dropped asset through service layer
+
+        self.drop_service.add_asset_to_scene(
+            scene_id,
+            asset
+        )
+
+
+        # Refresh UI to show updated project state
+
+        self.refresh()
+
+
+        # User feedback
+
+        self.statusBar().showMessage(
+            f"Added {asset['type']} to scene {scene_id}"
+        )
+
 
 
     def refresh(self):

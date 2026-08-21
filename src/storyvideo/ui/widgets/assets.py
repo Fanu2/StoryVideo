@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -10,15 +11,137 @@ from PySide6.QtWidgets import (
     QComboBox,
 )
 
+
 from PySide6.QtCore import (
     Signal,
     QSize,
+    QMimeData,
+    Qt,
+    QPoint,
 )
+
 
 from PySide6.QtGui import (
     QIcon,
     QPixmap,
+    QDrag,
 )
+
+
+
+class AssetListWidget(QListWidget):
+
+    """
+    Custom asset browser list.
+
+    Responsibilities:
+    - start drag operation
+    - send asset path
+
+    Does not access:
+    - database
+    - services
+    """
+
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.drag_start_position = QPoint()
+
+
+
+    def mousePressEvent(
+        self,
+        event
+    ):
+
+        if event.button() == Qt.LeftButton:
+
+            self.drag_start_position = event.position().toPoint()
+
+
+        super().mousePressEvent(
+            event
+        )
+
+
+
+    def mouseMoveEvent(
+        self,
+        event
+    ):
+
+        if not (
+            event.buttons()
+            &
+            Qt.LeftButton
+        ):
+
+            return
+
+
+        if (
+            event.position().toPoint()
+            -
+            self.drag_start_position
+        ).manhattanLength() < 10:
+
+            return
+
+
+
+        item = self.currentItem()
+
+
+        if not item:
+
+            return
+
+
+
+        asset = item.data(
+            1000
+        )
+
+
+        if not asset:
+
+            return
+
+
+
+        mime = QMimeData()
+
+
+        mime.setText(
+            asset["path"]
+        )
+
+
+
+        drag = QDrag(
+            self
+        )
+
+
+        drag.setMimeData(
+            mime
+        )
+
+
+        drag.exec(
+            Qt.CopyAction
+        )
+
+
+
+        super().mouseMoveEvent(
+            event
+        )
+
+
 
 
 class AssetsWidget(QWidget):
@@ -27,12 +150,11 @@ class AssetsWidget(QWidget):
     Project asset browser.
 
     Features:
-    - Thumbnail grid
-    - Search
-    - Type filter
-    - Asset selection signal
-
-    Receives data from Asset Service only.
+    - thumbnail grid
+    - search
+    - type filter
+    - selection signal
+    - drag source
     """
 
 
@@ -48,9 +170,11 @@ class AssetsWidget(QWidget):
         layout = QVBoxLayout()
 
 
+
         self.title = QLabel(
             "Project Assets"
         )
+
 
 
         self.search = QLineEdit()
@@ -58,6 +182,7 @@ class AssetsWidget(QWidget):
         self.search.setPlaceholderText(
             "Search assets..."
         )
+
 
 
         self.filter = QComboBox()
@@ -72,16 +197,31 @@ class AssetsWidget(QWidget):
         )
 
 
+
         self.search.textChanged.connect(
             self.apply_filter
         )
+
 
         self.filter.currentTextChanged.connect(
             self.apply_filter
         )
 
 
-        self.list = QListWidget()
+
+        self.list = AssetListWidget()
+
+
+
+        self.list.setDragEnabled(
+            True
+        )
+
+
+        self.list.setDragDropMode(
+            QListWidget.DragOnly
+        )
+
 
 
         self.list.setIconSize(
@@ -125,6 +265,7 @@ class AssetsWidget(QWidget):
         )
 
 
+
         layout.addWidget(
             self.title
         )
@@ -156,10 +297,6 @@ class AssetsWidget(QWidget):
         assets
     ):
 
-        """
-        Receive assets from Asset Service.
-        """
-
         self.assets = assets
 
         self.apply_filter()
@@ -168,16 +305,13 @@ class AssetsWidget(QWidget):
 
     def apply_filter(self):
 
-        """
-        Filter assets without touching service layer.
-        """
-
         self.list.clear()
 
 
         text = self.search.text().lower()
 
         selected = self.filter.currentText()
+
 
 
         for asset in self.assets:
@@ -188,9 +322,11 @@ class AssetsWidget(QWidget):
             ).name.lower()
 
 
+
             if text and text not in filename:
 
                 continue
+
 
 
             if selected == "Images" and asset["type"] != "image":
@@ -206,6 +342,7 @@ class AssetsWidget(QWidget):
             if selected == "Audio" and asset["type"] != "audio":
 
                 continue
+
 
 
             self.add_asset_item(
@@ -224,14 +361,11 @@ class AssetsWidget(QWidget):
 
         path = asset["path"]
 
-        filename = Path(
-            path
-        ).name
-
 
         item.setText(
-            f"{asset['type'].upper()} : {filename}"
+            f"{asset['type'].upper()} : {Path(path).name}"
         )
+
 
 
         if (
@@ -254,6 +388,7 @@ class AssetsWidget(QWidget):
                         )
                     )
                 )
+
 
 
         item.setData(
