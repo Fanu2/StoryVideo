@@ -80,3 +80,37 @@ def get_project_media(project_id):
 
 
     return rows
+
+
+def media_exists(
+    scene_id,
+    file_path
+):
+
+    """
+    Check if media already exists
+    in a scene.
+    """
+
+
+    conn = get_connection()
+
+
+    row = conn.execute(
+        """
+        SELECT id
+        FROM media
+        WHERE scene_id=?
+        AND file_path=?
+        """,
+        (
+            scene_id,
+            file_path,
+        )
+    ).fetchone()
+
+
+    conn.close()
+
+
+    return row is not None

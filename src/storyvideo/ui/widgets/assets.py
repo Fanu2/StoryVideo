@@ -3,7 +3,10 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
 )
+
+from PySide6.QtCore import Signal
 
 
 class AssetsWidget(QWidget):
@@ -15,7 +18,13 @@ class AssetsWidget(QWidget):
     - Images
     - Videos
     - Audio files
+
+    Does not access database directly.
     """
+
+    asset_selected = Signal(dict)
+
+
 
     def __init__(self):
 
@@ -33,10 +42,14 @@ class AssetsWidget(QWidget):
         self.list = QListWidget()
 
 
+        self.list.itemClicked.connect(
+            self.select_asset
+        )
+
+
         layout.addWidget(
             self.title
         )
-
 
         layout.addWidget(
             self.list
@@ -48,16 +61,72 @@ class AssetsWidget(QWidget):
         )
 
 
+        self.assets = []
+
+
+
     def load_assets(
         self,
         assets
     ):
 
+        """
+        Load asset data from Asset Service.
+        """
+
+
         self.list.clear()
 
 
-        for item in assets:
+        self.assets = assets
+
+
+        for asset in assets:
+
+
+            item = QListWidgetItem()
+
+
+            filename = (
+                asset["path"]
+                .split("/")[-1]
+            )
+
+
+            item.setText(
+                f"{asset['type'].upper()} : {filename}"
+            )
+
+
+            item.setData(
+                1000,
+                asset
+            )
+
 
             self.list.addItem(
-                f"{item[2]} : {item[1]}"
+                item
+            )
+
+
+
+    def select_asset(
+        self,
+        item
+    ):
+
+        """
+        Emit selected asset.
+        """
+
+
+        asset = item.data(
+            1000
+        )
+
+
+        if asset:
+
+            self.asset_selected.emit(
+                asset
             )

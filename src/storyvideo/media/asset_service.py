@@ -1,8 +1,8 @@
 """
 Asset Service
 
-Provides project asset information
-for UI and future features.
+Provides project assets for UI
+and future features.
 
 No Qt dependency.
 No rendering dependency.
@@ -11,19 +11,26 @@ No rendering dependency.
 
 from pathlib import Path
 
-from storyvideo.core.media import (
-    get_media,
-)
+from storyvideo.core.scene import get_scenes
+from storyvideo.core.media import get_media
 
 
 
 def get_project_assets(project_id):
+
     """
     Return all assets belonging to a project.
+
+    Output format:
+
+    {
+        id,
+        scene_id,
+        path,
+        type,
+        exists
+    }
     """
-
-
-    from storyvideo.core.scene import get_scenes
 
 
     assets = []
@@ -36,12 +43,14 @@ def get_project_assets(project_id):
 
     for scene in scenes:
 
-        media = get_media(
+
+        media_items = get_media(
             scene[0]
         )
 
 
-        for item in media:
+        for item in media_items:
+
 
             assets.append(
                 {

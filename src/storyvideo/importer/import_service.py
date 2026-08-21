@@ -32,6 +32,7 @@ from storyvideo.media.metadata import (
 
 from storyvideo.core.media import (
     add_media,
+    media_exists,
 )
 
 
@@ -90,11 +91,16 @@ def import_file(
     )
 
 
-    add_media(
+    if not media_exists(
         scene_id,
-        str(managed_path),
-        media_type
-    )
+        str(managed_path)
+    ):
+
+        add_media(
+            scene_id,
+            str(managed_path),
+            media_type
+        )
 
 
     return {
