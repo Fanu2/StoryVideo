@@ -15,7 +15,14 @@ class TimelineListWidget(QListWidget):
     """
     Timeline drop target.
 
-    Accepts asset paths from Asset Browser.
+    Responsibilities:
+    - Accept dragged asset paths
+    - Emit dropped path
+
+    Does not:
+    - access database
+    - call services
+    - modify projects
     """
 
 
@@ -28,14 +35,15 @@ class TimelineListWidget(QListWidget):
         super().__init__()
 
 
+        # Enable custom asset drops
+
         self.setAcceptDrops(
             True
         )
 
 
-        # Do not use DropOnly mode.
-        # It interferes with custom mime drops.
-
+        # Required because QListWidget
+        # receives events through viewport
 
         self.viewport().setAcceptDrops(
             True
@@ -48,10 +56,7 @@ class TimelineListWidget(QListWidget):
         event
     ):
 
-        print(
-            "TIMELINE DRAG ENTER"
-        )
-
+        # Accept only asset paths
 
         if event.mimeData().hasText():
 
@@ -64,6 +69,8 @@ class TimelineListWidget(QListWidget):
         event
     ):
 
+        # Continue accepting valid drags
+
         if event.mimeData().hasText():
 
             event.accept()
@@ -75,10 +82,12 @@ class TimelineListWidget(QListWidget):
         event
     ):
 
-        print(
-            "TIMELINE DROP",
-            event.mimeData().text()
-        )
+        """
+        Receive dropped asset.
+
+        Only emits the path.
+        MainWindow handles the action.
+        """
 
 
         if not event.mimeData().hasText():
@@ -98,7 +107,13 @@ class TimelineListWidget(QListWidget):
 class TimelineWidget(QWidget):
 
     """
-    Timeline scene browser.
+    Simple scene browser.
+
+    Provides:
+    - scene list
+    - selected scene lookup
+    - asset drop signal
+    - media count visibility
     """
 
 
@@ -122,6 +137,9 @@ class TimelineWidget(QWidget):
         )
 
 
+        # Custom list widget
+        # handles asset drops
+
         self.list = TimelineListWidget()
 
 
@@ -139,9 +157,11 @@ class TimelineWidget(QWidget):
             self.title
         )
 
+
         layout.addWidget(
             self.list
         )
+
 
         layout.addWidget(
             self.edit_button
@@ -156,23 +176,77 @@ class TimelineWidget(QWidget):
 
     def load_scenes(
         self,
-        scenes
+        scenes,
+        media_counts=None
     ):
+
+        """
+        Load project scenes.
+
+        media_counts example:
+
+        {
+            12: 2,
+            26: 1
+        }
+
+        Shows attached image count
+        without changing scene model.
+        """
+
 
         self.list.clear()
 
 
+
         for scene in scenes:
 
-            self.list.addItem(
-                f"{scene[0]} | "
+
+            scene_id = scene[0]
+
+
+            text = (
+                f"{scene_id} | "
                 f"{scene[1]} | "
                 f"{scene[2]} sec"
             )
 
 
+            count = 0
+
+
+            if media_counts:
+
+                count = media_counts.get(
+                    scene_id,
+                    0
+                )
+
+
+
+            if count:
+
+
+                text += (
+                    f" | {count} image"
+                    if count == 1
+                    else f" | {count} images"
+                )
+
+
+
+            self.list.addItem(
+                text
+            )
+
+
 
     def selected_scene(self):
+
+        """
+        Return selected scene id.
+        """
+
 
         item = self.list.currentItem()
 
@@ -194,6 +268,12 @@ class TimelineWidget(QWidget):
         self,
         path
     ):
+
+        """
+        Convert dropped path into
+        scene asset event.
+        """
+
 
         scene_id = self.selected_scene()
 

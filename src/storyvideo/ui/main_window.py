@@ -841,10 +841,32 @@ class MainWindow(QMainWindow):
 
         if self.current_project:
 
-            self.timeline.load_scenes(
-                get_scenes(
-                    self.current_project
+            # Load project scenes
+
+            scenes = get_scenes(
+                self.current_project
+            )
+
+
+            # Build simple media visibility map
+
+            media_counts = {}
+
+
+            for scene in scenes:
+
+                media_counts[scene[0]] = len(
+                    get_media(
+                        scene[0]
+                    )
                 )
+
+
+            # Display scenes with media count
+
+            self.timeline.load_scenes(
+                scenes,
+                media_counts
             )
 
 
