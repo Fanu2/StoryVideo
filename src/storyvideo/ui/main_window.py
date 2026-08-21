@@ -42,6 +42,12 @@ from storyvideo.importer.folder_importer import (
     scan_folder,
 )
 
+
+from storyvideo.importer.import_service import (
+    import_file,
+    import_files,
+)
+
 from storyvideo.renderer.moviepy_renderer import (
     render_project,
 )
@@ -503,10 +509,10 @@ class MainWindow(QMainWindow):
                 continue
 
 
-            add_media(
+            import_file(
+                self.current_project,
                 self.current_scene,
-                file,
-                kind
+                file
             )
 
 
@@ -531,10 +537,10 @@ class MainWindow(QMainWindow):
 
             for file, kind in scan_folder(folder):
 
-                add_media(
+                import_file(
+                    self.current_project,
                     self.current_scene,
-                    file,
-                    kind
+                    file
                 )
 
 
