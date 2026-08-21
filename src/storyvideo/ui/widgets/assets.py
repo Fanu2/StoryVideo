@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -6,7 +9,18 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
 )
 
-from PySide6.QtCore import Signal
+
+from PySide6.QtCore import (
+    Signal,
+    QSize,
+)
+
+
+from PySide6.QtGui import (
+    QIcon,
+    QPixmap,
+)
+
 
 
 class AssetsWidget(QWidget):
@@ -19,8 +33,9 @@ class AssetsWidget(QWidget):
     - Videos
     - Audio files
 
-    Does not access database directly.
+    Receives data from Asset Service only.
     """
+
 
     asset_selected = Signal(dict)
 
@@ -42,6 +57,21 @@ class AssetsWidget(QWidget):
         self.list = QListWidget()
 
 
+        # Better thumbnail view
+
+        self.list.setIconSize(
+            QSize(
+                96,
+                96
+            )
+        )
+
+
+        self.list.setSpacing(
+            4
+        )
+
+
         self.list.itemClicked.connect(
             self.select_asset
         )
@@ -50,6 +80,7 @@ class AssetsWidget(QWidget):
         layout.addWidget(
             self.title
         )
+
 
         layout.addWidget(
             self.list
@@ -71,7 +102,7 @@ class AssetsWidget(QWidget):
     ):
 
         """
-        Load asset data from Asset Service.
+        Load assets from Asset Service.
         """
 
 
@@ -81,21 +112,54 @@ class AssetsWidget(QWidget):
         self.assets = assets
 
 
+
         for asset in assets:
 
 
             item = QListWidgetItem()
 
 
-            filename = (
-                asset["path"]
-                .split("/")[-1]
-            )
+            path = asset["path"]
+
+
+            filename = Path(
+                path
+            ).name
+
 
 
             item.setText(
                 f"{asset['type'].upper()} : {filename}"
             )
+
+
+
+            # Image thumbnail
+
+            if (
+                asset["type"] == "image"
+                and Path(path).exists()
+            ):
+
+                pixmap = QPixmap(
+                    path
+                )
+
+
+                if not pixmap.isNull():
+
+                    thumbnail = pixmap.scaled(
+                        96,
+                        96
+                    )
+
+
+                    item.setIcon(
+                        QIcon(
+                            thumbnail
+                        )
+                    )
+
 
 
             item.setData(
