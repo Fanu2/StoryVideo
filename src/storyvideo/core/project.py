@@ -37,3 +37,34 @@ def get_projects():
 
 
     return rows
+
+def get_project_name(project_id):
+
+    """
+    Return project name from project id.
+    """
+
+    conn = get_connection()
+
+
+    row = conn.execute(
+        """
+        SELECT name
+        FROM projects
+        WHERE id=?
+        """,
+        (
+            project_id,
+        )
+    ).fetchone()
+
+
+    conn.close()
+
+
+    if row:
+
+        return row[0]
+
+
+    return None
