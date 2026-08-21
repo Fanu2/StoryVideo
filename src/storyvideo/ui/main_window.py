@@ -72,6 +72,16 @@ from storyvideo.ui.widgets.assets import (
 )
 
 
+from storyvideo.media.asset_service import (
+    get_project_assets,
+)
+
+
+from storyvideo.ui.widgets.assets import (
+    AssetsWidget,
+)
+
+
 class MainWindow(QMainWindow):
 
     """
@@ -153,6 +163,11 @@ class MainWindow(QMainWindow):
 
         splitter.addWidget(
             self.audio_tracks
+        )
+
+
+        splitter.addWidget(
+            self.assets
         )
 
 
@@ -660,6 +675,23 @@ class MainWindow(QMainWindow):
 
 
 
+    def preview_asset(
+        self,
+        asset
+    ):
+
+        """
+        Preview selected asset.
+        """
+
+
+        if asset["type"] == "image":
+
+            self.preview.show_image(
+                asset["path"]
+            )
+
+
     def refresh(self):
 
         if self.current_project:
@@ -671,15 +703,15 @@ class MainWindow(QMainWindow):
             )
 
 
-            self.assets.load_assets(
-                get_project_media(
+            self.audio_tracks.load_tracks(
+                get_audio_tracks(
                     self.current_project
                 )
             )
 
 
-            self.audio_tracks.load_tracks(
-                get_audio_tracks(
+            self.assets.load_assets(
+                get_project_assets(
                     self.current_project
                 )
             )
