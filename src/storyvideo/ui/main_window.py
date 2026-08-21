@@ -72,6 +72,11 @@ from storyvideo.ui.widgets.assets import (
 )
 
 
+from storyvideo.ui.widgets.asset_metadata import (
+    AssetMetadataWidget,
+)
+
+
 from storyvideo.media.asset_service import (
     get_project_assets,
 )
@@ -79,6 +84,11 @@ from storyvideo.media.asset_service import (
 
 from storyvideo.ui.widgets.assets import (
     AssetsWidget,
+)
+
+
+from storyvideo.ui.widgets.asset_metadata import (
+    AssetMetadataWidget,
 )
 
 
@@ -143,6 +153,14 @@ class MainWindow(QMainWindow):
         self.assets = AssetsWidget()
 
 
+        self.metadata = AssetMetadataWidget()
+
+
+        self.assets.asset_selected.connect(
+            self.metadata.show_asset
+        )
+
+
         # Main editor splitter
 
         splitter = QSplitter(
@@ -174,10 +192,16 @@ class MainWindow(QMainWindow):
         )
 
 
+        workspace.addWidget(
+            self.metadata
+        )
+
+
         workspace.setSizes(
             [
-                750,
-                300
+                650,
+                300,
+                220
             ]
         )
 
@@ -289,12 +313,6 @@ class MainWindow(QMainWindow):
         file_menu.addAction(
             "New Project",
             self.new_project
-        )
-
-
-        file_menu.addAction(
-            "Open Project",
-            self.open_project
         )
 
 
@@ -443,9 +461,39 @@ class MainWindow(QMainWindow):
         self.current_project = None
         self.current_scene = None
 
+
+        # Clear timeline
+
         self.timeline.list.clear()
 
+
+        # Clear assets
+
+        self.assets.list.clear()
+
+        self.assets.assets = []
+
+
+        # Clear metadata
+
+        self.metadata.show_asset(
+            None
+        )
+
+
+        # Clear preview
+
+        self.preview.label.clear()
+
+        self.preview.label.setText(
+            "Preview"
+        )
+
+
+        # Clear audio
+
         self.audio_tracks.list.clear()
+
 
         self.statusBar().showMessage(
             "No project loaded"
