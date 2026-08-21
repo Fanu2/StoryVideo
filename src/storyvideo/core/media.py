@@ -7,6 +7,10 @@ def add_media(
     file_path,
     media_type
 ):
+    """
+    Attach media to a scene.
+    """
+
 
     conn = get_connection()
 
@@ -14,7 +18,11 @@ def add_media(
     conn.execute(
         """
         INSERT INTO media
-        (scene_id, file_path, media_type)
+        (
+            scene_id,
+            file_path,
+            media_type
+        )
         VALUES (?, ?, ?)
         """,
         (
@@ -34,15 +42,31 @@ def add_media(
 def get_media(
     scene_id
 ):
+    """
+    Get media attached to a scene.
+
+    Returns ordered media:
+    id,
+    file_path,
+    media_type
+    """
+
 
     conn = get_connection()
 
 
     rows = conn.execute(
         """
-        SELECT id, file_path, media_type
+        SELECT
+            id,
+            file_path,
+            media_type
+
         FROM media
+
         WHERE scene_id=?
+
+        ORDER BY id
         """,
         (
             scene_id,
@@ -60,9 +84,9 @@ def get_media(
 def get_project_media(
     project_id
 ):
-
     """
-    Get all media belonging to a project.
+    Get all media belonging
+    to a project.
 
     Returns:
     id,
@@ -107,10 +131,9 @@ def media_exists(
     scene_id,
     file_path
 ):
-
     """
-    Check if media already exists
-    in a scene.
+    Check whether media is already
+    attached to a scene.
     """
 
 
@@ -120,13 +143,15 @@ def media_exists(
     row = conn.execute(
         """
         SELECT id
+
         FROM media
+
         WHERE scene_id=?
         AND file_path=?
         """,
         (
             scene_id,
-            file_path,
+            file_path
         )
     ).fetchone()
 
@@ -141,12 +166,11 @@ def media_exists(
 def remove_media(
     media_id
 ):
-
     """
-    Remove media assignment from a scene.
+    Remove media relationship.
 
-    Removes only database relation.
-    Does not delete the actual file.
+    Only removes the database entry.
+    Original file remains untouched.
     """
 
 
@@ -156,6 +180,7 @@ def remove_media(
     conn.execute(
         """
         DELETE FROM media
+
         WHERE id=?
         """,
         (
@@ -165,6 +190,5 @@ def remove_media(
 
 
     conn.commit()
-
 
     conn.close()

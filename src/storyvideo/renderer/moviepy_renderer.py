@@ -34,6 +34,53 @@ VIDEO_HEIGHT = 1080
 
 
 # =================================================
+# Render validation
+# =================================================
+
+def validate_scenes(
+    project_id
+):
+    """
+    Validate project before rendering.
+
+    Every scene must contain media.
+
+    Prevents silent skipping of empty scenes.
+    """
+
+
+    scenes = get_scenes(
+        project_id
+    )
+
+
+    missing = []
+
+
+    for scene in scenes:
+
+        media = get_media(
+            scene[0]
+        )
+
+
+        if not media:
+
+            missing.append(
+                scene[0]
+            )
+
+
+
+    if missing:
+
+        raise ValueError(
+            f"Scenes without media: {missing}"
+        )
+
+
+
+# =================================================
 # Prepare image
 # =================================================
 
@@ -43,7 +90,7 @@ def prepare_image(
 ):
 
     """
-    Convert any image size into
+    Convert image into
     standard video frame.
     """
 
@@ -63,6 +110,7 @@ def prepare_image(
         clip = clip.resized(
             width=VIDEO_WIDTH
         )
+
 
 
     clip = clip.cropped(
@@ -92,11 +140,11 @@ def prepare_audio(
     """
     Prepare audio track.
 
-    - Loop short audio
-    - Cut long audio
-    - Match video length
-    - Volume control
-    - Fade in/out
+    Features:
+    - loop short audio
+    - trim long audio
+    - volume control
+    - fade in/out
     """
 
 
@@ -108,6 +156,7 @@ def prepare_audio(
     clips = []
 
     total = 0
+
 
 
     while total < duration:
@@ -160,8 +209,14 @@ def build_video(
 ):
 
     """
-    Create video from scenes.
+    Create video timeline
+    from project scenes.
     """
+
+
+    validate_scenes(
+        project_id
+    )
 
 
     final_clips = []
@@ -184,6 +239,7 @@ def build_video(
         )
 
 
+
         for item in media:
 
 
@@ -195,12 +251,9 @@ def build_video(
 
             if not Path(path).exists():
 
-                print(
-                    "Skipping missing:",
-                    path
+                raise FileNotFoundError(
+                    f"Missing media file: {path}"
                 )
-
-                continue
 
 
 
@@ -233,14 +286,11 @@ def build_video(
 
 
 
-        if scene_clips:
-
-
-            final_clips.append(
-                concatenate_videoclips(
-                    scene_clips
-                )
+        final_clips.append(
+            concatenate_videoclips(
+                scene_clips
             )
+        )
 
 
 
@@ -266,7 +316,7 @@ def add_project_audio(
 ):
 
     """
-    Mix all project audio tracks.
+    Mix project audio tracks.
     """
 
 
@@ -290,12 +340,9 @@ def add_project_audio(
 
         if not Path(track[1]).exists():
 
-            print(
-                "Missing audio:",
-                track[1]
+            raise FileNotFoundError(
+                f"Missing audio file: {track[1]}"
             )
-
-            continue
 
 
 
@@ -349,6 +396,7 @@ def render_project(
     )
 
 
+
     if video is None:
 
         print(
@@ -365,6 +413,7 @@ def render_project(
     )
 
 
+
     output = Path(
         output_file
     )
@@ -376,10 +425,12 @@ def render_project(
     )
 
 
+
     print(
         "Rendering:",
         output
     )
+
 
 
     video.write_videofile(
@@ -388,6 +439,7 @@ def render_project(
         codec="libx264",
         audio_codec="aac"
     )
+
 
 
     print(

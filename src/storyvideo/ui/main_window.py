@@ -712,10 +712,21 @@ class MainWindow(QMainWindow):
 
 
 
-            render_project(
-                self.current_project,
-                output_file
-            )
+            try:
+
+                render_project(
+                    self.current_project,
+                    output_file
+                )
+
+
+            except Exception as e:
+
+                QMessageBox.critical(
+                    self,
+                    "Render Error",
+                    str(e)
+                )
 
     def select_scene(
         self,
