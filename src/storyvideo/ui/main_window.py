@@ -713,7 +713,18 @@ class MainWindow(QMainWindow):
                 output_file
             )
 
-    def select_scene(self, item):
+    def select_scene(
+        self,
+        item
+    ):
+
+        """
+        Handle timeline scene selection.
+
+        Loads all images attached to
+        the selected scene into preview.
+        """
+
 
         scene_id = (
             item.text()
@@ -722,15 +733,32 @@ class MainWindow(QMainWindow):
         )
 
 
-        for media in get_media(scene_id):
+        media_items = get_media(
+            scene_id
+        )
 
-            if media[2] == "image":
 
-                self.preview.show_image(
-                    media[1]
-                )
+        # Extract only image files
 
-                break
+        images = [
+            media[1]
+            for media in media_items
+            if media[2] == "image"
+        ]
+
+
+        # Update preview information
+
+        self.preview.show_scene_info(
+            len(images)
+        )
+
+
+        # Load scene images
+
+        self.preview.set_images(
+            images
+        )
 
 
 
