@@ -1,18 +1,17 @@
 """
 Media Manager Layer
 
-Business logic for project media.
+Handles project-owned assets.
 
-Future responsibilities:
+Uses project_id as the permanent identity.
 
-- import assets
-- duplicate detection
-- project portability
-- asset validation
-- asset lifecycle management
+Responsibilities:
+- calculate managed asset location
+- prepare imported assets
+- avoid duplicate copies
 
-This layer sits between UI/importers
-and filesystem/database.
+No UI logic.
+No database logic.
 """
 
 
@@ -29,12 +28,16 @@ from .metadata import (
 
 
 def create_project_media_path(
-    project_name,
+    project_id,
     source_file
 ):
 
     """
-    Calculate managed project path.
+    Create managed project media path.
+
+    Example:
+
+    projects/project_10/media/images/photo.jpg
     """
 
 
@@ -43,7 +46,7 @@ def create_project_media_path(
     )
 
 
-    folder_map = {
+    folders = {
 
         "image": "images",
 
@@ -54,7 +57,7 @@ def create_project_media_path(
     }
 
 
-    folder = folder_map.get(
+    folder = folders.get(
         category,
         "other"
     )
@@ -63,7 +66,7 @@ def create_project_media_path(
     return (
         Path("projects")
         /
-        project_name
+        f"project_{project_id}"
         /
         "media"
         /
@@ -75,19 +78,17 @@ def create_project_media_path(
 
 
 def prepare_asset(
-    project_name,
+    project_id,
     source_file
 ):
 
     """
-    Prepare media asset.
-
-    Does not touch database yet.
+    Copy external asset into project storage.
     """
 
 
     destination = create_project_media_path(
-        project_name,
+        project_id,
         source_file
     )
 

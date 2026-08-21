@@ -37,7 +37,7 @@ from storyvideo.core.media import (
 
 
 def import_file(
-    project_name,
+    project_id,
     scene_id,
     source_file
 ):
@@ -85,7 +85,7 @@ def import_file(
 
 
     managed_path = prepare_asset(
-        project_name,
+        project_id,
         source_file
     )
 
@@ -105,7 +105,7 @@ def import_file(
 
 
 def import_files(
-    project_name,
+    project_id,
     scene_id,
     files
 ):
@@ -121,7 +121,7 @@ def import_files(
 
         imported.append(
             import_file(
-                project_name,
+                project_id,
                 scene_id,
                 file
             )
